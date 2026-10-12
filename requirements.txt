@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+sqlalchemy
+pymupdf
+pymupdf4llm        # PyMuPDF Layout: typed blocks (heading/table/figure/header/footer)
+chromadb
+rank-bm25
+openai            # GPT-4o / GPT-4o-mini answering + embeddings (optional)
+anthropic         # Opus baseline for the eval harness (optional)
+sentence-transformers   # default local embeddings; skip if EMBEDDING_PROVIDER=openai
+streamlit
+requests
+# celery[redis]         # uncomment for the production ingestion path (USE_CELERY=true)

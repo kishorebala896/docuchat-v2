@@ -1,0 +1,4 @@
+{"id": "q1", "question": "What was F001's AUM?", "doc_id": "DOC_ID", "should_abstain": false, "expected_points": ["F001", "851500000"]}
+{"id": "q2", "question": "Under the Revenue section, what grew in August?", "doc_id": "DOC_ID", "should_abstain": false, "expected_points": ["Revenue grew"]}
+{"id": "q3", "question": "What is the CEO's favorite color?", "doc_id": "DOC_ID", "should_abstain": true, "expected_points": []}
+{"id": "q4", "question": "What does the footer say?", "doc_id": "DOC_ID", "should_abstain": true, "expected_points": []}
