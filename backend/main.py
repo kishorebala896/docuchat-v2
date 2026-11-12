@@ -14,12 +14,15 @@ Concurrency model:
   * parsing/embedding never blocks the API: BackgroundTasks by default,
     Celery workers when USE_CELERY=true (scale workers independently)
 """
+import logging
 import os
 import shutil
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import llm, retrieval, vectorstore
@@ -51,6 +54,37 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+# Angular dev server (frontend-angular/ served by `ng serve`).
+# Deliberately narrow: local development only, not a wildcard.
+ANGULAR_DEV_ORIGIN = "http://localhost:4200"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[ANGULAR_DEV_ORIGIN],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["*"],
+)
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception(request: Request, exc: Exception):
+    # Without this, an unhandled exception returns a bare 500 whose response
+    # never passes through CORSMiddleware, so the browser reports a CORS
+    # failure instead of the real error and the frontend cannot tell it
+    # apart from a down backend. Starlette wires handlers for Exception/500
+    # into ServerErrorMiddleware (outermost, outside CORS), so the header
+    # has to be set explicitly here. HTTPException keeps its own default
+    # handler; this only catches genuine server errors.
+    logging.getLogger("docuchat").exception("unhandled error on %s", request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+        headers={
+            "Access-Control-Allow-Origin": ANGULAR_DEV_ORIGIN,
+            "Vary": "Origin",
+        },
+    )
 
 
 def _doc_or_404(db: Session, doc_id: str) -> Document:
